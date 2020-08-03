@@ -1,28 +1,52 @@
-pipeline{
+// Define variables
+def scmVars
+
+// Start Pipeline
+pipeline {
+
+  // Configure Jenkins Slave
   agent any
-  stages {
-        stage('dev'){
-            when {branch 'develop'}
-            steps{
-            sh' ssh cockatiel@103.86.50.70 " pm2 delete ${JOB_NAME} || : " '
-            sh' ssh cockatiel@103.86.50.70 " mkdir -p /home/cockatiel/${JOB_NAME} " '
-            sh' ssh cockatiel@103.86.50.70 " rm -rf /home/cockatiel/${JOB_NAME}/* || : " '
-            sh' scp -r * cockatiel@103.86.50.70:/home/cockatiel/${JOB_NAME} '
-            sh' ssh cockatiel@103.86.50.70 " cd /home/cockatiel/${JOB_NAME} && yarn && REACT_APP_GIT_VERSION=$(echo ${GIT_COMMIT} | cut -c1-7) pm2 start yarn --name "${JOB_NAME}" -- dev " '
-            sh' curl -X POST "https://api.cloudflare.com/client/v4/zones/ace57d8bd8257975cdc0dda90bc49946/purge_cache" -H "X-Auth-Email: sittiwat.j@mail.kmutt.ac.th" -H "X-Auth-Key: 364800243c0f94861ab1ae839da030d4c1f69" -H "Content-Type: application/json" --data \'{"purge_everything":true}\' '
-            }
-        }
-        stage('master'){
-            when {branch 'master'}
-            steps{
-            sh' export NVM_DIR="$HOME/.nvm" &&[ -s "/var/lib/jenkins/.nvm/nvm.sh" ]  && \\. "/var/lib/jenkins/.nvm/nvm.sh" && [ -s "/var/lib/jenkins/.nvm/bash_completion" ]  && \\. "/var/lib/jenkins/.nvm/bash_completion" && yarn && yarn build '
-            sh' ssh cockatiel@103.86.50.70 " pm2 delete ${JOB_NAME} || : " '
-            sh' ssh cockatiel@103.86.50.70 " mkdir -p /home/cockatiel/${JOB_NAME} " '
-            sh' ssh cockatiel@103.86.50.70 " rm -rf /home/cockatiel/${JOB_NAME}/* || : " '
-            sh' scp -r build/* cockatiel@103.86.50.70:/home/cockatiel/${JOB_NAME} '
-            sh' ssh cockatiel@103.86.50.70 " cd /home/cockatiel/${JOB_NAME} && REACT_APP_GIT_VERSION=$(echo ${GIT_COMMIT} | cut -c1-7) pm2 start serve --name "${JOB_NAME}" -- -l 5000 " '
-            sh' curl -X POST "https://api.cloudflare.com/client/v4/zones/ace57d8bd8257975cdc0dda90bc49946/purge_cache" -H "X-Auth-Email: sittiwat.j@mail.kmutt.ac.th" -H "X-Auth-Key: 364800243c0f94861ab1ae839da030d4c1f69" -H "Content-Type: application/json" --data \'{"purge_everything":true}\' '
-            }
-        }
+    environment {
+    ENV_NAME = "${BRANCH_NAME == "master" ? "develop" : "${BRANCH_NAME}"}"
   }
-}
+
+  // Start Pipeline
+  stages {
+
+    // ***** Stage Clone *****
+    stage('Clone ratings source code') {
+      // Steps to run build
+      steps {
+          // Use script to run
+          script {
+            // Git clone repo and checkout branch as we put in parameter
+            scmVars = git branch: "${BRANCH_NAME}",
+                          url: 'https://github.com/gun082544/HelloCockatiel-PR.git'
+          } // End script
+      } // End steps
+    } // End stage
+    // ***** Stage Build files *****
+    stage('Install dependencies and build files') {
+      steps {
+          sh' cd HelloCockatiel-PR'
+          sh' yarn '
+          sh' yarn build'
+      } // End steps
+    } // End stage
+    // ***** Stage Build Docker Image *****
+    stage('Build Docker Image') {
+      steps {
+        sh' cd Hellocockatiel-PR '
+        sh' sudo docker build -t hellocockatiel . '
+      } // End steps
+    } // End stage
+    
+    stage('Deploy HelloworldCockatiel WebPR') {
+      steps {
+              sh "sudo docker run -d -p 80:80 --name helloworldcockatiel hellocockatiel"
+      } // End steps
+    } // End stage
+
+
+  } // End stages
+} // End pipeline
