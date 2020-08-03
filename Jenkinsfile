@@ -14,7 +14,7 @@ pipeline {
   stages {
 
     // ***** Stage Clone *****
-    stage('Clone ratings source code') {
+    stage('Clone Hellocockatiel-PR code') {
       // Steps to run build
       steps {
           // Use script to run
@@ -25,21 +25,42 @@ pipeline {
           } // End script
       } // End steps
     } // End stage
+
     // ***** Stage Build files *****
     stage('Install dependencies and build files') {
       steps {
-          sh' cd HelloCockatiel-PR'
-          sh' yarn '
-          sh' yarn build'
+          sh'whoami'
+          sh'''
+            #!/bin/bash
+            source ~/.bash_profile
+            yarn
+          '''
+          sh'''
+            #!/bin/bash
+            source ~/.bash_profile
+            yarn build
+          '''
       } // End steps
     } // End stage
+    stage('Delete old Docker Image') {
+      steps {
+        sh' sudo docker image rm -f hellocockatiel '
+      } // End steps
+    } // End stage
+    
     // ***** Stage Build Docker Image *****
     stage('Build Docker Image') {
       steps {
-        sh' cd Hellocockatiel-PR '
         sh' sudo docker build -t hellocockatiel . '
       } // End steps
     } // End stage
+     
+    stage('Delete old container') {
+      steps {
+        sh' sudo docker rm -f hellocockatiel '
+      } // End steps
+    } // End stage
+    
     
     stage('Deploy HelloworldCockatiel WebPR') {
       steps {
