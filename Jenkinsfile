@@ -14,7 +14,7 @@ pipeline {
   stages {
 
     // ***** Stage Clone *****
-    stage('Clone Hellocockatiel-PR code') {
+    stage('Clone HelloCockatiel-WebPR code') {
       // Steps to run build
       steps {
           // Use script to run
@@ -62,9 +62,9 @@ pipeline {
     } // End stage
     
     
-    stage('Deploy HelloworldCockatiel WebPR') {
+    stage('Deploy HelloCockatiel WebPR') {
       steps {
-              sh "sudo docker run -d -p 80:80 --name helloworldcockatiel hellocockatiel"
+              sh "sudo docker run -d -p 80:80 --name hellocockatiel hellocockatiel"
       } // End steps
     } // End stage
 
