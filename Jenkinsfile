@@ -49,19 +49,19 @@ pipeline {
 
     stage('Tagging Docker Image') {
       steps{
-        sh' sudo tag hellocockatiel gunfluenza/hellocockatiel:latest'
+        sh' sudo tag hellocockatiel gunfluenza/hellocockatiel:build-${BUILD_NUMBER}'
       }
     }
     
     stage('Push image to Docker hub') {
       steps{
-        sh' sudo docker push gunfluenza/hellocockatiel:latest '
+        sh' sudo docker push gunfluenza/hellocockatiel:build-${BUILD_NUMBER} '
       }
     }
     
     stage('Deploy HelloCockatiel WebPR on Helm') {
       steps {
-              sh "helm upgrade -i -f Hellocockatiel-PR/values.yaml --wait --namespace=master hellodeploy  Hellocockatiel-PR "
+              sh "helm upgrade -i -f Hellocockatiel-PR/values.yaml --wait --namespace=develop hellodeploy  Hellocockatiel-PR "
       } // End steps
     } // End stage
 
