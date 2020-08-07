@@ -13,7 +13,6 @@ pipeline {
   // Start Pipeline
   stages {
 
-    // ***** Stage Clone *****
     stage('Clone HelloCockatiel-WebPR code') {
       // Steps to run build
       steps {
@@ -26,10 +25,9 @@ pipeline {
       } // End steps
     } // End stage
 
-    // ***** Stage Build files *****
     stage('Install dependencies and build files') {
       steps {
-          sh'whoami'
+
           sh'''
             #!/bin/bash
             source ~/.bash_profile
@@ -42,29 +40,28 @@ pipeline {
           '''
       } // End steps
     } // End stage
-    stage('Delete old Docker Image') {
-      steps {
-        sh' sudo docker image rm -f hellocockatiel '
-      } // End steps
-    } // End stage
-    
-    // ***** Stage Build Docker Image *****
+
     stage('Build Docker Image') {
       steps {
         sh' sudo docker build -t hellocockatiel . '
       } // End steps
     } // End stage
-     
-    stage('Delete old container') {
-      steps {
-        sh' sudo docker rm -f hellocockatiel '
-      } // End steps
-    } // End stage
+
+    stage('Tagging Docker Image') {
+      steps{
+        sh' sudo tag hellocockatiel gunfluenza/hellocockatiel:latest'
+      }
+    }
     
+    stage('Push image to Docker hub') {
+      steps{
+        sh' sudo docker push gunfluenza/hellocockatiel:latest '
+      }
+    }
     
-    stage('Deploy HelloCockatiel WebPR') {
+    stage('Deploy HelloCockatiel WebPR on Helm') {
       steps {
-              sh "sudo docker run -d -p 80:80 --name hellocockatiel hellocockatiel"
+              sh "helm upgrade -i -f Hellocockatiel-PR/values.yaml --wait --namespace=master hellodeploy  Hellocockatiel-PR "
       } // End steps
     } // End stage
 
